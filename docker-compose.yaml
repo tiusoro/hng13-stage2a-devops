@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  app_blue:
+    image: ${BLUE_IMAGE}
+    container_name: app_blue
+    environment:
+      - RELEASE_ID=${RELEASE_ID_BLUE}
+      - APP_POOL=blue
+      - PORT=${PORT:-3000}
+    ports:
+      - "8081:${PORT:-3000}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  app_green:
+    image: ${GREEN_IMAGE}
+    container_name: app_green
+    environment:
+      - RELEASE_ID=${RELEASE_ID_GREEN}
+      - APP_POOL=green
+      - PORT=${PORT:-3000}
+    ports:
+      - "8082:${PORT:-3000}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  nginx:
+    image: nginx:stable
+    container_name: bg_nginx
+    depends_on:
+      - app_blue
+      - app_green
+    ports:
+      - "${NGINX_PUBLIC_PORT:-8080}:80"
+    volumes:
+      - ./nginx/default.conf.tmpl:/etc/nginx/templates/default.conf.tmpl:ro
+      - ./nginx/start.sh:/etc/nginx/start.sh:ro
+      - ./nginx/reload.sh:/etc/nginx/reload.sh:ro
+    environment:
+      - ACTIVE_POOL=${ACTIVE_POOL}
+      - APP_PORT=${PORT:-3000}
+    command: ["/bin/sh", "-c", "/etc/nginx/start.sh"]
+
+
+

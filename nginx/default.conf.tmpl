@@ -1,0 +1,35 @@
+# upstream placeholders replaced by start.sh/reload.sh
+upstream app_upstream {
+    server PRIMARY_HOST:PRIMARY_PORT max_fails=1 fail_timeout=3s;
+    server BACKUP_HOST:BACKUP_PORT backup;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+
+    proxy_connect_timeout 1s;
+    proxy_send_timeout 3s;
+    proxy_read_timeout 5s;
+
+    proxy_next_upstream error timeout http_500 http_502 http_503 http_504;
+    proxy_next_upstream_tries 2;
+
+    location / {
+        proxy_pass http://app_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-App-Proxy "nginx-blue-green";
+
+        proxy_pass_header X-App-Pool;
+        proxy_pass_header X-Release-Id;
+    }
+
+    location /healthz {
+        proxy_pass http://app_upstream/healthz;
+        proxy_set_header Host $host;
+    }
+}
+
+
