@@ -1,7 +1,7 @@
 
 ---
 
-# 💙💚 Blue–Green Deployment Project – Summary
+# 💙💚 Blue–Green Deployment Project with Nginx and Docker Compose.
 
 ## 1. **Project Goals**
 
